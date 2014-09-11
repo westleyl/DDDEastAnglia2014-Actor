@@ -1,0 +1,106 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+
+namespace ActorsLifeForMe.MD5Folder
+{
+    class Program
+    {
+        private static readonly CancellationTokenSource 
+            CancellationSource = new CancellationTokenSource();
+
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Ready to start.");
+            Console.ReadLine();
+
+            ProcessFolder(@"N:\iPlayer Recordings\NDCOslo");
+
+            Console.ReadLine();
+        }
+
+        private static void ProcessFolder(string folder)
+        {
+            // this quickly modifies our processing to be multi-threaded
+            var blockConfiguration = new ExecutionDataflowBlockOptions()
+            {
+                MaxDegreeOfParallelism = 1,
+                BoundedCapacity = 1,
+                CancellationToken = CancellationSource.Token
+            };
+
+            var cancelOnlyBlockConfiguration = new ExecutionDataflowBlockOptions()
+            {
+                CancellationToken = CancellationSource.Token
+            };
+
+            var findContentsOfFolderBlock = new TransformManyBlock<string, string>(
+                (Func<string, IEnumerable<string>>)GetFolderContents,
+                cancelOnlyBlockConfiguration);
+            findContentsOfFolderBlock.LinkTo(findContentsOfFolderBlock, Directory.Exists);
+
+            var displayFilepathAndMD5ToConsole = new ActionBlock<Tuple<string, string>>(
+                new Action<Tuple<string, string>>(DisplayMD5OnConsole),
+                cancelOnlyBlockConfiguration);
+
+            var createBlocks = new List<TransformBlock<string, Tuple<string, string>>>();
+            for (int i = 1; i < 5; i++)
+            {
+                var createMD5Block = new TransformBlock<string, Tuple<string, string>>(
+                    filename => MD5WithFilename(filename), blockConfiguration);
+
+                findContentsOfFolderBlock.LinkTo(createMD5Block, File.Exists);
+
+                createMD5Block.LinkTo(displayFilepathAndMD5ToConsole);
+
+                createBlocks.Add(createMD5Block);
+            }
+
+            findContentsOfFolderBlock.Post(folder);
+
+            Console.ReadLine();
+            CancellationSource.Cancel();
+            Console.WriteLine("Cancelled by user.");
+            Console.ReadLine();
+        }
+
+        private static IEnumerable<string> GetFolderContents(string folder)
+        {
+            return System.IO.Directory.GetFileSystemEntries(folder);
+        }
+
+        private static Tuple<string, string> MD5WithFilename(string filepath)
+        {
+            Console.WriteLine("Begin for {0}", Path.GetFileName(filepath));
+            Console.WriteLine(" ... and in folder {0}", Path.GetDirectoryName(filepath));
+            var returnValue = new Tuple<string, string>(filepath, MD5FromFile(filepath));
+
+            // cancel 'DURING PROCESS' rather than letting current Task within a block complete automatically
+            // if (CancellationSource.IsCancellationRequested) throw new OperationCanceledException();
+
+            Console.WriteLine("MD5 completed for {0}", Path.GetFileName(filepath));
+            return returnValue;
+        }
+
+        private static void DisplayMD5OnConsole(Tuple<string, string> filepathAndMd5)
+        {
+            Console.WriteLine("MD5 for {0} : {1}", 
+                Path.GetFileName(filepathAndMd5.Item1), filepathAndMd5.Item2);
+        }
+
+        private static string MD5FromFile(string filename)
+        {
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = File.OpenRead(filename))
+                {
+                    return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
+                }
+            }
+        }
+    }
+}

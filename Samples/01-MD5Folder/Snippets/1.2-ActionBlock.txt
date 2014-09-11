@@ -1,0 +1,59 @@
+﻿using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+
+namespace ActorsLifeForMe.MD5Folder
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Ready to start.");
+            Console.ReadLine();
+
+            ProcessFolder(@"N:\iPlayer Recordings\NDCOslo");
+
+            Console.WriteLine("Completed.");
+            Console.ReadLine();
+        }
+
+        private static void ProcessFolder(string folder)
+        {
+            // this quickly modifies our processing to be multi-threaded
+            var blockConfiguration = new ExecutionDataflowBlockOptions()
+            {
+                MaxDegreeOfParallelism = 4
+            };
+
+            var displayMD5Block = new ActionBlock<string>(new Action<string>(DisplayMD5FromFileOnConsole), blockConfiguration);
+
+            var files = System.IO.Directory.GetFiles(folder);
+            foreach (var filepath in files)
+            {
+                displayMD5Block.Post(filepath);
+            }
+
+            displayMD5Block.Complete();
+            displayMD5Block.Completion.Wait();
+        }
+
+        private static void DisplayMD5FromFileOnConsole(string filepath)
+        {
+            Console.WriteLine("Begin : {0} : thread {1}, task {2}", Path.GetFileName(filepath).Substring(0, 30), System.Threading.Thread.CurrentThread.ManagedThreadId, Task.CurrentId);
+            Console.WriteLine("End : {0} : {1}", Path.GetFileName(filepath).Substring(0, 30), MD5FromFile(filepath));
+        }
+
+        private static string MD5FromFile(string filename)
+        {
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = File.OpenRead(filename))
+                {
+                    return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
+                }
+            }
+        }
+    }
+}

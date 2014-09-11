@@ -1,0 +1,123 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+
+namespace ActorsLifeForMe.MD5Folder
+{
+    using System.Runtime.Remoting.Messaging;
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Ready to start.");
+            Console.ReadLine();
+
+            ProcessFolder(@"N:\iPlayer Recordings\NDCOslo");
+
+            Console.ReadLine();
+        }
+
+        private static void ProcessFolder(string folder)
+        {
+            var blockConfigurationFourItemsAtATime = new ExecutionDataflowBlockOptions()
+            {
+                BoundedCapacity = 4
+            };
+
+            // recursive folder block
+            var folderContentsBlock = new TransformManyBlock<string, string>((Func<string, IEnumerable<string>>)GetFolderContents);
+            folderContentsBlock.LinkTo(folderContentsBlock, IsFolder);
+
+            // filenames passed to initial broadcast block
+            var initialInputBroadcastBlock = new BroadcastBlock<string>(String.Copy);
+            folderContentsBlock.LinkTo(initialInputBroadcastBlock, IsFile);
+
+            // first destination for initial broadcast block
+            var bufferLogToFile = new BufferBlock<string>();
+            var logRequestsToFile = new ActionBlock<string>(new Action<string>(LogMD5RequestToFile));
+            initialInputBroadcastBlock.LinkTo(bufferLogToFile);
+            bufferLogToFile.LinkTo(logRequestsToFile);
+  
+            // second destination for initial broadcast block
+            var bufferCreateMD5Block = new BufferBlock<string>();
+            var createMD5Block = new TransformBlock<string, Tuple<string, string>>(filename => MD5WithFilename(filename), blockConfigurationFourItemsAtATime);
+            initialInputBroadcastBlock.LinkTo(bufferCreateMD5Block);
+            bufferCreateMD5Block.LinkTo(createMD5Block);
+
+            // second broadcast block that pushes filepath+MD5 onwards
+            var filepathAndMD5BroadcastBlock = new BroadcastBlock<Tuple<string, string>>(tup => new Tuple<string, string>(String.Copy(tup.Item1), String.Copy(tup.Item2)));
+            createMD5Block.LinkTo(filepathAndMD5BroadcastBlock);
+
+            // first destination for second broadcast block
+            var bufferWriteMD5Block = new BufferBlock<Tuple<string, string>>();
+            var writeMD5ActionBlock = new ActionBlock<Tuple<string, string>>(new Action<Tuple<string, string>>(WriteMD5ToFileSystem));
+            filepathAndMD5BroadcastBlock.LinkTo(bufferWriteMD5Block);
+            bufferWriteMD5Block.LinkTo(writeMD5ActionBlock);
+
+            // second destination for second broadcast block
+            var bufferDisplayMD5Block = new BufferBlock<Tuple<string, string>>();
+            var displayMD5ActionBlock = new ActionBlock<Tuple<string, string>>(new Action<Tuple<string, string>>(DisplayMD5WithFilename));
+            filepathAndMD5BroadcastBlock.LinkTo(bufferDisplayMD5Block);
+            bufferDisplayMD5Block.LinkTo(displayMD5ActionBlock);
+
+            // start work
+            folderContentsBlock.Post(folder);
+        }
+
+        private static bool IsFolder(string filepath)
+        {
+            return Directory.Exists(filepath);
+        }
+        private static bool IsFile(string filepath)
+        {
+            return File.Exists(filepath);
+        }
+
+        private static IEnumerable<string> GetFolderContents(string folder)
+        {
+            return System.IO.Directory.GetFileSystemEntries(folder);
+        }
+
+        private static void LogMD5RequestToFile(string filepath)
+        {
+            var logFilepath = Path.Combine(System.IO.Path.GetTempPath(), "ActorsLifeForMe.log");
+            LogMD5RequestToFile(logFilepath, filepath);
+        }
+
+        private static void LogMD5RequestToFile(string logFilepath, string filepath)
+        {
+            System.IO.File.AppendAllText(logFilepath, String.Format("{0} : MD5 requested for file, {1}.\r\n", DateTime.Now.ToLongDateString(), filepath));
+        }
+
+        private static Tuple<string, string> MD5WithFilename(string filepath)
+        {
+            Console.WriteLine("Begin : {0} : thread {1}, task {2}", Path.GetFileName(filepath), System.Threading.Thread.CurrentThread.ManagedThreadId, Task.CurrentId);
+            return new Tuple<string, string>(filepath, MD5FromFile(filepath));
+        }
+
+        private static void WriteMD5ToFileSystem(Tuple<string, string> filenameAndMD5)
+        {
+            System.IO.File.WriteAllText(filenameAndMD5.Item1 + ".md5", filenameAndMD5.Item2);
+        }
+
+        private static void DisplayMD5WithFilename(Tuple<string, string> filenameAndMD5)
+        {
+            Console.WriteLine("End : {0} : {1}", Path.GetFileName(filenameAndMD5.Item1), filenameAndMD5.Item2);
+        }
+        
+        private static string MD5FromFile(string filename)
+        {
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = File.OpenRead(filename))
+                {
+                    return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
+                }
+            }
+        }
+    }
+}
