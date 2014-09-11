@@ -1,4 +1,4 @@
-# NDC Oslo 2014 #
+# DDD East Anglia 2014 #
 
 [http://www.dddeastanglia.com/](http://www.dddeastanglia.com/)
 
