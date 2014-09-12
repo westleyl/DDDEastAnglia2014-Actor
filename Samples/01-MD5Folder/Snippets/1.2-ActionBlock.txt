@@ -13,7 +13,7 @@ namespace ActorsLifeForMe.MD5Folder
             Console.WriteLine("Ready to start.");
             Console.ReadLine();
 
-            ProcessFolder(@"N:\iPlayer Recordings\NDCOslo");
+            ProcessFolder(@"c:\iPlayer\DDDEastAnglia");
 
             Console.WriteLine("Completed.");
             Console.ReadLine();

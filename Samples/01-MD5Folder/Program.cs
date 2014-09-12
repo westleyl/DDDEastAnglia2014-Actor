@@ -16,7 +16,7 @@ namespace ActorsLifeForMe.MD5Folder
             Console.WriteLine("Ready to start.");
             Console.ReadLine();
 
-            ProcessFolder(@"E:\Video - BBC");
+            ProcessFolder(@"c:\iPlayer\DDDEastAnglia");
 
             Console.ReadLine();
         }
@@ -41,7 +41,7 @@ namespace ActorsLifeForMe.MD5Folder
             var logRequestsToFile = new ActionBlock<string>(new Action<string>(LogMD5RequestToFile));
             initialInputBroadcastBlock.LinkTo(bufferLogToFile);
             bufferLogToFile.LinkTo(logRequestsToFile);
-  
+
             // second destination for initial broadcast block
             var bufferCreateMD5Block = new BufferBlock<string>();
             var createMD5Block = new TransformBlock<string, Tuple<string, string>>(filename => MD5WithFilename(filename), blockConfigurationFourItemsAtATime);
@@ -108,7 +108,7 @@ namespace ActorsLifeForMe.MD5Folder
         {
             Console.WriteLine("End : {0} : {1}", Path.GetFileName(filenameAndMD5.Item1), filenameAndMD5.Item2);
         }
-        
+
         private static string MD5FromFile(string filename)
         {
             using (var md5 = MD5.Create())

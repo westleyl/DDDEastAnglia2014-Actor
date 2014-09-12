@@ -47,14 +47,13 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Content Include="Snippets\1.7-BroadcastBlockBufferBlock.txt" />
     <Content Include="Snippets\1.6-CancellationToken.txt" />
     <Content Include="Snippets\1.5-FilteredTransformMany.txt" />
     <Content Include="Snippets\1.4-BufferBlock.txt" />
     <Content Include="Snippets\1.3-TransformBlock.txt" />
     <Content Include="Snippets\1.2-ActionBlock.txt" />
     <Content Include="Snippets\1.1-NoDataFlow.txt" />
-    <Content Include="Snippets\1.8-PubSub-BufferBlock.txt" />
+    <Content Include="Snippets\1.7-PubSub-BufferBlock.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
