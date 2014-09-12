@@ -1,8 +1,0 @@
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\bin\Debug\Sample01.exe.config
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\bin\Debug\Sample01.exe
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\bin\Debug\Sample01.pdb
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\bin\Debug\System.Threading.Tasks.Dataflow.dll
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\bin\Debug\System.Threading.Tasks.Dataflow.xml
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\obj\Debug\01-MD5Folder.csprojResolveAssemblyReference.cache
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\obj\Debug\Sample01.exe
-C:\source\DDDEastAnglia2014-Actor\Samples\01-MD5Folder\obj\Debug\Sample01.pdb
