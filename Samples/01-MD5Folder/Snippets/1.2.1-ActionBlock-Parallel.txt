@@ -21,7 +21,13 @@ namespace ActorsLifeForMe.MD5Folder
 
         private static void ProcessFolder(string folder)
         {
-            var displayMD5Block = new ActionBlock<string>(new Action<string>(DisplayMD5FromFileOnConsole));
+            // this quickly modifies our processing to be multi-threaded
+            var blockConfiguration = new ExecutionDataflowBlockOptions()
+            {
+                MaxDegreeOfParallelism = 4
+            };
+
+            var displayMD5Block = new ActionBlock<string>(new Action<string>(DisplayMD5FromFileOnConsole), blockConfiguration);
 
             var files = System.IO.Directory.GetFiles(folder);
             foreach (var filepath in files)

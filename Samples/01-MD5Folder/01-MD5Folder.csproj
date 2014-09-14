@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="Snippets\1.2.1-ActionBlock-Parallel.txt" />
     <Content Include="Snippets\1.6-CancellationToken.txt" />
     <Content Include="Snippets\1.5-FilteredTransformMany.txt" />
     <Content Include="Snippets\1.4-BufferBlock.txt" />

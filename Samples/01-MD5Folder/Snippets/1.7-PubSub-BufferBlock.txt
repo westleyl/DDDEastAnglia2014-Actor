@@ -7,8 +7,6 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ActorsLifeForMe.MD5Folder
 {
-    using System.Runtime.Remoting.Messaging;
-
     class Program
     {
         static void Main(string[] args)
@@ -41,7 +39,7 @@ namespace ActorsLifeForMe.MD5Folder
             var logRequestsToFile = new ActionBlock<string>(new Action<string>(LogMD5RequestToFile));
             initialInputBroadcastBlock.LinkTo(bufferLogToFile);
             bufferLogToFile.LinkTo(logRequestsToFile);
-  
+
             // second destination for initial broadcast block
             var bufferCreateMD5Block = new BufferBlock<string>();
             var createMD5Block = new TransformBlock<string, Tuple<string, string>>(filename => MD5WithFilename(filename), blockConfigurationFourItemsAtATime);
@@ -90,12 +88,12 @@ namespace ActorsLifeForMe.MD5Folder
 
         private static void LogMD5RequestToFile(string logFilepath, string filepath)
         {
-            System.IO.File.AppendAllText(logFilepath, String.Format("{0} : MD5 requested for file, {1}.\r\n", DateTime.Now.ToLongDateString(), filepath));
+            System.IO.File.AppendAllText(logFilepath, String.Format("{0} : MD5 requested for file, {1}.\r\n", DateTime.Now.ToLongDateString(), filepath.Substring(0, 30)));
         }
 
         private static Tuple<string, string> MD5WithFilename(string filepath)
         {
-            Console.WriteLine("Begin : {0} : thread {1}, task {2}", Path.GetFileName(filepath), System.Threading.Thread.CurrentThread.ManagedThreadId, Task.CurrentId);
+            Console.WriteLine("Begin : {0} : thread {1}, task {2}", Path.GetFileName(filepath).Substring(0, 30), System.Threading.Thread.CurrentThread.ManagedThreadId, Task.CurrentId);
             return new Tuple<string, string>(filepath, MD5FromFile(filepath));
         }
 
@@ -106,9 +104,9 @@ namespace ActorsLifeForMe.MD5Folder
 
         private static void DisplayMD5WithFilename(Tuple<string, string> filenameAndMD5)
         {
-            Console.WriteLine("End : {0} : {1}", Path.GetFileName(filenameAndMD5.Item1), filenameAndMD5.Item2);
+            Console.WriteLine("End : {0} : {1}", Path.GetFileName(filenameAndMD5.Item1).Substring(0, 30), filenameAndMD5.Item2);
         }
-        
+
         private static string MD5FromFile(string filename)
         {
             using (var md5 = MD5.Create())

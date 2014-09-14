@@ -37,7 +37,7 @@ namespace ActorsLifeForMe.MD5Folder
                 var createMD5Block = new TransformBlock<string, Tuple<string, string>>(filename => MD5WithFilename(filename),
                         blockConfigurationOneItemAtATime);
 
-                folderContentsBlock.LinkTo(createMD5Block, predicate:IsFile);
+                folderContentsBlock.LinkTo(createMD5Block, predicate: IsFile);
 
                 createMD5Block.LinkTo(displayMD5Block);
 
@@ -63,13 +63,13 @@ namespace ActorsLifeForMe.MD5Folder
 
         private static Tuple<string, string> MD5WithFilename(string filepath)
         {
-            Console.WriteLine("Begin : {0} : thread {1}, task {2}", Path.GetFileName(filepath), System.Threading.Thread.CurrentThread.ManagedThreadId, Task.CurrentId);
+            Console.WriteLine("Begin : {0} : thread {1}, task {2}", Path.GetFileName(filepath).Substring(0, 30), System.Threading.Thread.CurrentThread.ManagedThreadId, Task.CurrentId);
             return new Tuple<string, string>(filepath, MD5FromFile(filepath));
         }
 
         private static void DisplayMD5WithFilename(Tuple<string, string> filenameAndMD5)
         {
-            Console.WriteLine("End : {0} : {1}", Path.GetFileName(filenameAndMD5.Item1), filenameAndMD5.Item2);
+            Console.WriteLine("End : {0} : {1}", Path.GetFileName(filenameAndMD5.Item1).Substring(0, 30), filenameAndMD5.Item2);
         }
         private static string MD5FromFile(string filename)
         {
